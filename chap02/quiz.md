@@ -21,14 +21,14 @@ typeof Infinity; // "number"
 다음 조건을 짧게 표현하면 어떻게 될까요?
 
 ```ts
-value === null || value === undefined
+value === null || value === undefined;
 ```
 
 <details>
 <summary>정답</summary>
 
 ```ts
-value == null
+value == null;
 ```
 
 느슨한 동등 비교에서 `null`은 `null`과 `undefined`에만 일치한다. 다만 프로젝트의 린트 규칙에 따라 `==` 사용이 금지될 수 있다.
@@ -88,18 +88,7 @@ error instanceof Error;
 
 </details>
 
-## 5. 타입스크립트의 컴파일 결과
-
-타입스크립트를 컴파일하면 타입 정보가 포함된 기계어가 만들어질까요?
-
-<details>
-<summary>정답</summary>
-
-아니다. 타입 정보가 제거된 자바스크립트 코드가 만들어진다. 타입스크립트의 타입은 컴파일 타임에 타입을 검사하는 데 사용되며 런타임에는 남지 않는다.
-
-</details>
-
-## 6. 타입 단언의 효과
+## 5. 타입 단언의 효과
 
 `value as string`을 사용하면 런타임에 `value`가 실제 문자열로 변환될까요?
 
@@ -110,36 +99,7 @@ error instanceof Error;
 
 </details>
 
-## 7. 원시 타입과 래퍼 객체
-
-타입스크립트에서 문자열 타입을 선언할 때 `string`과 `String` 중 무엇을 사용해야 하며, 둘의 차이는 무엇일까요?
-
-<details>
-<summary>정답</summary>
-
-원시 문자열 타입인 `string`을 사용해야 한다. `String`은 원시 값을 감싼 래퍼 객체 타입이므로 `string`과 다르다.
-
-</details>
-
-## 8. `symbol`
-
-다음 코드의 실행 결과는 무엇일까요?
-
-```ts
-const first = Symbol("title");
-const second = Symbol("title");
-
-console.log(first === second);
-```
-
-<details>
-<summary>정답</summary>
-
-`false`다. `Symbol()`은 같은 설명을 전달하더라도 매번 서로 다른 고유한 값을 생성한다.
-
-</details>
-
-## 9. `enum`과 유니온 타입
+## 6. `enum`과 유니온 타입
 
 유니온 타입과 달리 `enum`을 런타임에 순회하거나 값 검증에 활용할 수 있는 이유는 무엇일까요?
 
@@ -150,34 +110,20 @@ console.log(first === second);
 
 </details>
 
-## 10. `type`과 `interface`
-
-다음 상황에는 `type`과 `interface` 중 어떤 문법이 더 적합할까요?
-
-1. 선언 병합이 필요하다.
-2. 유니온 타입을 정의한다.
-3. 클래스에서 `implements`로 구현할 공통 규격을 정의한다.
-4. 매핑된 타입의 computed key인 `[K in Keys]`를 활용한다.
-
-<details>
-<summary>정답</summary>
-
-1. `interface`
-2. `type`
-3. 둘 다 가능하지만, 확장 가능한 공통 규격이라는 의미를 강조할 때는 `interface`를 흔히 사용한다.
-4. `type`
-
-절대적인 선택 기준은 아니며, 표현하려는 타입과 팀 컨벤션에 따라 달라질 수 있다.
-
-</details>
-
-## 11. `{}` 타입
+## 7. `{}` 타입
 
 `{}` 타입은 프로퍼티가 하나도 없는 객체만을 의미할까요?
 
 <details>
 <summary>정답</summary>
 
-아니다. 타입스크립트의 `{}`는 `null`과 `undefined`를 제외한 모든 값을 허용한다. 또한 `{}` 타입으로 선언한 값에는 구체적인 프로퍼티가 정의되어 있지 않으므로 프로퍼티에 임의로 접근하거나 추가할 수 없다.
+아니다. 타입스크립트에서 `{}`는 "프로퍼티가 없는 객체"를 나타내는 정확한 객체 형태가 아니라, `null`과 `undefined`를 제외한 모든 값을 허용하는 타입이다. 따라서 프로퍼티가 있는 객체도 `{}`에 할당할 수 있다.
+
+```ts
+const value: {} = { name: "Mong" }; // 가능
+const count: {} = 1; // 가능
+```
+
+다만 `{}` 타입 자체에는 `name` 같은 프로퍼티가 선언되어 있지 않으므로, `value.name`처럼 해당 프로퍼티에 접근할 수는 없다. 이는 실제 값에 키가 들어가면 안 된다는 뜻이 아니라, 컴파일러가 `{}`라는 타입 정보만으로는 그 키의 존재를 보장할 수 없다는 뜻이다.
 
 </details>

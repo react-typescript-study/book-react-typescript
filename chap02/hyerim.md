@@ -28,12 +28,10 @@ flowchart LR
     end
 ```
 
-> 타입스크립트에서 컴파일 타임의 결과물은 기계어가 아니라 타입 정보가 제거된 자바스크립트다. 이 자바스크립트를 런타임에 자바스크립트 엔진이 해석하고 실행한다.
-
 ### 타입스크립트의 컴파일
 
 - 일반적인 컴파일은 고수준 언어를 저수준 언어나 기계어로 변환하는 과정이다.
-- 타입스크립트는 컴파일되어도 자바스크립트 코드가 만들어진다는 점이 특이하다.
+- 타입스크립트에서 컴파일 타임의 결과물은 기계어가 아니라 타입 정보가 제거된 자바스크립트다. 이 자바스크립트를 런타임에 자바스크립트 엔진이 해석하고 실행한다.
 - 타입스크립트의 타입은 컴파일 과정에서 제거되며 런타임에는 남지 않는다.
 - 즉 타입스크립트는 자바스크립트에 타입이라는 레이어를 추가해, 자바스크립트에서 런타임에 발생할 수 있는 오류를 컴파일 타임에 미리 발견하도록 돕는 언어라고 볼 수 있다.
 
@@ -56,24 +54,53 @@ interface Cat {
 
 const cat: Cat = { name: "Zag", age: 2 };
 const pet: Pet = cat; // 가능
+
+const anotherPet: Pet = { name: "Mong" };
+const anotherCat: Cat = anotherPet; // 오류: `age`가 없음
 ```
+
+- 할당 가능 여부는 오른쪽 값이 왼쪽 타입에서 요구하는 프로퍼티를 모두 제공하는지로 판단한다.
+  - `pet = cat`: 왼쪽의 `Pet`은 `name`만 요구한다. 오른쪽의 `cat`에는 `name`이 있으므로 할당할 수 있다. 남는 `age`는 문제가 되지 않는다.
+  - `cat = pet`: 왼쪽의 `Cat`은 `name`과 `age`를 모두 요구한다. 오른쪽의 `pet`에는 `age`가 있다고 보장할 수 없으므로 할당할 수 없다.
+- 키만 보면 `Cat`의 키 집합이 `Pet`의 키 집합을 포함하지만, 값의 범위로 보면 관계가 반대다. 모든 `Cat` 값은 `Pet`의 조건을 만족하므로 `Cat` 값의 집합이 `Pet` 값의 집합에 포함된다. 따라서 `Cat`은 `Pet`의 서브타입이고 `Cat` 값을 `Pet` 자리에 사용할 수 있다.
 
 ### 값과 타입의 구분
 
 - 타입스크립트에는 값 공간과 타입 공간이 따로 존재한다.
-- 타입은 컴파일 과정에서 제거되기 때문에 구조 분해 할당에서 프로퍼티 타입을 지정할 때는 객체 전체의 타입을 별도로 작성해야 한다.
+- 구조 분해 패턴인 `{ ... }` 내부는 값을 변수에 연결하는 자리다. 따라서 이 안에서 사용하는 `:`는 타입 지정이 아니라 프로퍼티의 이름을 바꾸는 자바스크립트 문법이다.
 
 ```ts
-function email(
-  { person, subject, body }: {
-    person: Person;
-    subject: string;
-    body: string;
-  },
-) {
+function email({ person: recipient }) {
+  // `person` 프로퍼티의 값을 `recipient`라는 지역 변수로 받음
+  console.log(recipient);
+}
+```
+
+- 따라서 아래처럼 `person: Person`이라고 작성해도 타입 공간의 `Person`을 가리키지 않는다. 값 공간에서 `person` 프로퍼티의 값을 `Person`이라는 지역 변수에 담는다는 뜻이다.
+
+```ts
+function email({ person: Person }) {
+  console.log(Person); // `Person`은 타입이 아니라 지역 변수
+}
+```
+
+- 구조 분해한 매개변수의 타입을 지정하려면 구조 분해 패턴이 끝난 뒤에 객체 전체의 타입을 작성해야 한다.
+
+```ts
+function email({
+  person,
+  subject,
+  body,
+}: {
+  person: Person;
+  subject: string;
+  body: string;
+}) {
   // ...
 }
 ```
+
+- 앞의 `{ person, subject, body }`는 실행할 때 객체에서 값을 꺼내는 구조 분해 패턴이고, 뒤의 `: { person: Person; subject: string; body: string }`는 컴파일할 때 검사할 객체 타입이다.
 
 ### enum을 잘 사용하지 않는 이유
 
@@ -93,24 +120,55 @@ function email(
 
 ## 2.3 원시 타입
 
-### 원시 값과 원시 래퍼 객체
-
-- 타입스크립트의 원시 타입은 `string`, `number`, `boolean`처럼 소문자로 작성한다.
-- `String`, `Number`, `Boolean`처럼 파스칼 표기법으로 작성한 타입은 원시 값을 감싼 래퍼 객체를 의미하므로 원시 타입과 다르다.
 - `NaN`과 `Infinity`도 `number` 타입에 포함된다.
 
 ### symbol
 
-- `Symbol()`은 설명에 같은 문자열을 전달하더라도 서로 중복되지 않는 고유한 원시 값을 만든다.
-- 원시 타입이지만 생성 함수를 호출하고 고유한 식별자로 사용한다는 점이 객체처럼 느껴져 인상 깊었다.
-- `unique symbol` 타입은 값이 바뀌지 않아야 하므로 `const`로 선언해야 한다.
+- `Symbol()`은 호출할 때마다 서로 다른 `symbol` 원시 값을 만든다.
+
+```ts
+const first: symbol = Symbol("id");
+const second: symbol = Symbol("id");
+
+first === second; // false
+typeof first; // "symbol"
+```
+
+- `symbol`과 `unique symbol`은 런타임에 서로 다른 종류의 값이 아니다. 둘 다 `typeof` 결과가 `"symbol"`인 심벌이다. 차이는 타입스크립트가 값을 얼마나 구체적으로 구분하는지에 있다.
+  - `symbol`: 어떤 심벌이든 담을 수 있는 넓은 타입
+  - `unique symbol`: 특정 심벌 하나만 나타내는 타입
+
+- `unique symbol`은 특정 값 하나를 나타내야 하므로 다른 심벌로 재할당할 수 없는 `const` 또는 `static readonly` 프로퍼티에만 선언할 수 있다.
+
+```ts
+let key: symbol = Symbol("key");
+key = Symbol("other"); // 가능: `key`에는 어떤 심벌이든 담을 수 있음
+
+const USER_ID: unique symbol = Symbol("USER_ID");
+const ORDER_ID: unique symbol = Symbol("ORDER_ID");
+
+// 타입스크립트는 USER_ID와 ORDER_ID를 서로 다른 타입으로 구분함
+```
 
 ## 2.4 객체 타입
 
 ### `{}` 타입
 
-- `{}` 타입은 프로퍼티가 없는 객체의 모양을 의미하는 것이 아니다.
-- 따라서 `{}`로 지정한 값에는 새로운 프로퍼티를 임의로 할당할 수 없다.
+- `{}` 타입은 프로퍼티가 없는 객체의 모양이 아니라 `null`과 `undefined`를 제외한 모든 값을 의미한다. 따라서 원시 값이나 프로퍼티가 있는 객체도 `{}` 타입에 할당할 수 있다.
+- 다만 `{}` 타입에는 구체적인 프로퍼티가 선언되어 있지 않다. 실제 값에 프로퍼티가 있더라도 `{}` 타입으로 보는 동안에는 컴파일러가 그 존재를 보장할 수 없으므로 해당 프로퍼티에 접근하거나 새 프로퍼티를 할당할 수 없다.
+
+```ts
+const value: {} = { name: "Mong" }; // 가능
+const count: {} = 1; // 가능
+
+value.name; // 오류: 변수의 타입으로 지정한 `{}`에는 `name`이 선언되어 있지 않음
+value.age = 2; // 오류: `{}` 타입에는 `age`가 선언되어 있지 않음
+
+const inferredValue = { name: "Mong" };
+inferredValue.name; // 가능: 타입 추론으로 `name`이 변수의 타입에 보존됨
+```
+
+- 즉 오른쪽 값에는 실제로 `name`이 있지만, `value: {}`라는 타입 표기로 컴파일러에는 그 변수를 `{}` 타입으로만 다루라고 지정했기 때문에 `value`를 통해 `name`을 꺼낼 수 없다. 프로퍼티를 사용하려면 구체적인 객체 타입을 지정하거나 타입 추론을 사용해야 한다.
 
 ### type과 interface
 
