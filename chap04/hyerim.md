@@ -10,7 +10,8 @@
 
 ### 유니온 타입
 
-- 유니온 타입 `A | B`는 값의 집합 관점에서 합집합으로 볼 수 있다. 즉 값은 `A` 또는 `B` 중 하나의 타입에 해당한다.
+- 유니온 타입 `A | B`는 값의 집합 관점에서 합집합으로 볼 수 있다.
+- 여기서 합집합이라는 말은 `A`의 모든 프로퍼티와 `B`의 모든 프로퍼티를 합친다는 뜻이 아니다. `A` 타입의 값과 `B` 타입의 값을 모두 허용한다는 뜻이다.
 - 하지만 유니온 타입의 값이 구체적으로 어느 타입인지 확인하기 전에는, 유니온에 포함된 모든 타입이 공통으로 가지는 프로퍼티에만 접근할 수 있다.
 
 ```ts
@@ -25,19 +26,38 @@ interface DeliveryStep {
   distance: string;
 }
 
+type BaedalStep = CookingStep | DeliveryStep;
+
+const cooking: BaedalStep = {
+  orderId: "ORDER_1",
+  price: 15000,
+}; // CookingStep 타입의 값이므로 대입 가능
+
+const delivery: BaedalStep = {
+  orderId: "ORDER_2",
+  time: 20,
+  distance: "3km",
+}; // DeliveryStep 타입의 값이므로 대입 가능
+
 function getDeliveryDistance(step: CookingStep | DeliveryStep) {
+  step.orderId; // 가능: 두 타입에 모두 존재함
   return step.distance;
   // 오류: `CookingStep`에는 `distance` 프로퍼티가 없음
 }
 ```
 
-- `step`은 `CookingStep`이거나 `DeliveryStep`이지, 두 타입을 동시에 만족한다고 보장할 수 없다.
-- 따라서 두 타입의 공통 프로퍼티인 `orderId`에는 바로 접근할 수 있지만, `DeliveryStep`에만 있는 `distance`를 사용하려면 먼저 타입을 좁혀야 한다.
+- `step`은 `CookingStep`이거나 `DeliveryStep`이지, **두 타입을 동시에 만족한다고 보장할 수 없다.**
+- 따라서 두 타입의 공통 프로퍼티인 `orderId`에는 바로 접근할 수 있지만, `DeliveryStep`에만 있는 `distance`를 사용하려면 **먼저 타입을 좁혀야 한다.**
+- 즉 **대입할 수 있는 값의 범위**와 **안전하게 접근할 수 있는 프로퍼티의 범위**를 구분해야 한다.
+  - 값의 관점: `CookingStep`의 값 또는 `DeliveryStep`의 값을 받을 수 있으므로 합집합이다.
+  - 프로퍼티 접근의 관점: 실제 값이 어느 타입인지 모르므로 두 타입에 공통으로 존재하는 프로퍼티만 안전하게 사용할 수 있다.
+- 공통 프로퍼티에만 접근할 수 있다는 사실이 유니온을 교집합으로 만드는 것은 아니다. 합집합에 포함된 어떤 값이 들어와도 오류가 발생하지 않게 하기 위한 제약이다.
 
 ### 교차 타입
 
 - 교차 타입 `A & B`는 여러 타입을 모두 만족하는 타입이다.
 - 객체 타입을 교차하면 각 객체 타입의 프로퍼티를 모두 가진 하나의 타입이 만들어진다.
+- 공통 타입에 옵셔널 프로퍼티를 추가하는 대신, 특정 타입에만 필요한 프로퍼티를 교차 타입으로 결합해 필수 속성으로 추가할 수 있다.
 
 ```ts
 interface CookingStep {
@@ -60,8 +80,10 @@ type BaedalProgress = CookingStep & DeliveryStep;
 // }
 ```
 
+#### 교차하는 타입이 서로 호환되지 않는 경우
+
 - `BaedalProgress`는 `CookingStep`과 `DeliveryStep`을 모두 만족해야 하므로 두 타입의 모든 프로퍼티를 가진다.
-- 같은 이름의 프로퍼티를 서로 호환되지 않는 타입으로 선언한 객체 타입을 교차하면, 해당 프로퍼티도 두 타입을 모두 만족해야 하므로 `never`가 된다.
+- 같은 이름의 프로퍼티를 **서로 호환되지 않는 타입으로 선언한 객체 타입을 교차**하면 해당 프로퍼티의 타입은 `never`가 된다.
 
 ```ts
 type DeliveryTip = {
@@ -74,8 +96,6 @@ type Filter = DeliveryTip & {
 
 // Filter의 tip: number & string, 즉 never
 ```
-
-#### 교차하는 타입이 서로 호환되지 않는 경우
 
 ```ts
 type IdType = string | number;
