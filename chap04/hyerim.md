@@ -119,10 +119,9 @@ type Universal = IdType & Numeric; // number
 
 ### typeof와 instanceof
 
-- 원시 타입을 확인할 때는 주로 `typeof`를 사용한다.
-- 클래스를 통해 생성된 인스턴스의 타입을 판별할 때는 `instanceof`를 사용한다.
-
-> TODO: 객체에 `typeof`를 사용하면 대부분 `"object"`가 나오는 이유와, `instanceof`가 `Array` 같은 구체적인 객체 타입을 어떻게 판별하는지 알아보기
+- 원시 타입을 추론할 때는 `typeof`를 사용하고, 인스턴스화된 객체 타입을 판별할 때는 `instanceof`를 사용한다.
+- 인스턴스화란 클래스를 바탕으로 `new` 키워드를 사용해 실제 객체인 인스턴스를 만드는 것을 말한다.
+- `instanceof`는 객체가 특정 클래스에서 생성된 인스턴스인지 확인한다. 타입스크립트는 이 결과를 바탕으로 객체를 해당 클래스 타입으로 좁히므로, 클래스에 선언된 프로퍼티와 메서드에 접근할 수 있다.
 
 ### in 연산자를 활용한 객체의 속성 유무 구분
 
@@ -139,6 +138,35 @@ function getDeliveryDistance(step: CookingStep | DeliveryStep) {
   return undefined;
 }
 ```
+
+### is를 활용한 사용자 정의 타입 가드
+
+- 타입 명제(type predicate)는 함수의 반환 타입을 `A is B` 형식으로 작성한다. `A`는 함수의 매개변수 이름이고, `B`는 좁히려는 타입이다.
+- 타입 명제도 런타임에는 불리언 값을 반환하지만, **일반적인 `boolean`과 달리 반환값이 `true`일 때 매개변수 `A`를 타입 `B`로 좁혀야 한다는 정보까지 타입스크립트에 알려준다.**
+
+```ts
+function isDeliveryStep(
+  step: CookingStep | DeliveryStep,
+): step is DeliveryStep {
+  return "distance" in step;
+}
+
+function getDeliveryDistance(step: CookingStep | DeliveryStep) {
+  if (isDeliveryStep(step)) {
+    return step.distance;
+    // step은 DeliveryStep으로 좁혀짐
+  }
+
+  return undefined;
+}
+```
+
+- 사용자 정의 타입 가드는 다음과 같은 경우에 유용하다.
+  - API 응답처럼 타입의 범위가 넓거나 확실하지 않은 값을 검사할 때
+  - 배열에서 특정 타입의 원소만 필터링할 때
+  - 복잡한 타입 판별 로직을 별도 함수로 분리할 때
+  - 검사 후 특정 타입의 프로퍼티나 메서드를 안전하게 사용해야 할 때
+- 검사와 사용이 같은 위치에 있어 타입스크립트가 조건문을 직접 분석하여 타입을 좁힐 수 있다면 사용자 정의 타입 가드를 만들 필요가 없다.
 
 ## 4.3 타입 좁히기 - 식별할 수 있는 유니온(Discriminated Unions)
 
